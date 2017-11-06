@@ -1,0 +1,20 @@
+{
+  "name": "maze_game",
+  "version": "0.0.1",
+  "description": "Maze Game",
+  "dependencies": {
+    "console-stamp": "^0.2.6",
+    "express": "^4.15.2",
+    "nodejs-physijs": "^0.1.5",
+    "socket.io": "^2.0.4",
+    "webworker-threads": "^0.7.13",
+    "webworkify-webpack": "^2.1.0",
+    "worker-loader": "^1.1.0",
+    "workerjs": "^0.1.1"
+  },
+  "devDependencies": {
+    "prettier-webpack-plugin": "^0.2.2",
+    "webpack": "^3.8.1",
+    "worker-loader": "^1.1.0"
+  }
+}
