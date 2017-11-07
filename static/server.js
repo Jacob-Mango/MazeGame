@@ -18,7 +18,8 @@ class Server {
 		this.io = io;
 		this.app = app;
 
-		this.numBots = 1;
+		this.numBots = 0;
+		this.numPlayers = 0;
 	}
 
 	start() {
@@ -32,6 +33,9 @@ class Server {
 		this.manageConsoleInput(this);
 
 		console.log("Server has started.");
+
+		this.addBot();
+		this.addBot();
 	}
 
 	stop(code) {
@@ -107,7 +111,7 @@ class Server {
 					console.log("Teleported " + player.name + " to %x, %y, %z", player.position.x, player.position.y, player.position.z);
 					break;
 				case "addbot":
-					this.addBot("Bot_" + this.numBots++);
+					server.addBot();
 					break;
 				default:
 			}
@@ -149,22 +153,38 @@ class Server {
 		return position;
 	}
 
-	addBot(name) {
-		let player = new Player(name, name, this.checkForSpawnPosition(), false, true);
+	uuid() {
+		var d = new Date().getTime();
+		if (typeof performance !== "undefined" && typeof performance.now === "function") {
+			d += performance.now(); //use high-precision timer if available
+		}
+		return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+			var r = ((d + Math.random() * 16) % 16) | 0;
+			d = Math.floor(d / 16);
+			return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+		});
+	}
+
+	addBot() {
+		let bot = new Player(this.uuid(), "Bot_" + this.numBots, this.checkForSpawnPosition(), false, true);
 
 		this.io.emit("player_join", {
-			id: player.id,
-			data: player.formatJSON()
+			id: bot.id,
+			player: bot.formatJSON()
 		});
 
-		player.createModel(this.game);
-		this.game.addPlayer(player);
+		bot.createModel(this.game);
+		this.game.addPlayer(bot);
 
-		console.log(this.game.players[name].name + " has joined!");
+		this.numBots++;
+
+		console.log("Added " + this.game.players[bot.id].name + " to the game!");
 	}
 
 	onPlayerLogin(client, data) {
-		let player = new Player(client.id, data.name, this.checkForSpawnPosition(), false, true);
+		let player = new Player(this.uuid(), data.name == false ? "Player_" + this.numPlayers : data.name, this.checkForSpawnPosition(), false, true);
+
+		player.socket_id = client.id;
 
 		for (var key in this.game.players) {
 			if (this.game.players.hasOwnProperty(key)) {
@@ -188,11 +208,13 @@ class Server {
 		player.createModel(this.game);
 		this.game.addPlayer(player);
 
-		console.log(this.game.players[client.id].name + " has joined!");
+		this.numPlayers++;
+
+		console.log(this.game.players[player.id].name + " has joined!");
 	}
 
 	onPlayerDisconnect(client, data) {
-		var player = this.game.getPlayer(client.id);
+		var player = this.game.getPlayerFromSocketID(client.id);
 		if (player) {
 			client.broadcast.emit("player_disconnect", {
 				id: player.id

@@ -57,7 +57,7 @@ class Client {
 	}
 
 	onConnectionSuccessful(socket, data) {
-		socket.emit("player_login", { name: socket.id });
+		socket.emit("player_login", { name: false });
 	}
 
 	onPlayerJoin(socket, data) {

@@ -113,6 +113,15 @@ class Game {
 		return this.players[id];
 	}
 
+	getPlayerFromSocketID(socket_id) {
+		for (var key in this.players) {
+			if (this.players.hasOwnProperty(key)) {
+				if (this.players[key].socket_id == socket_id) return this.players[key];
+			}
+		}
+		return undefined;
+	}
+
 	removePlayer(id) {
 		if (typeof this.players[id].model !== "undefined") this.scene.remove(this.players[id].model);
 		if (typeof this.players[id].nametag !== "undefined") this.scene.remove(this.players[id].nametag);

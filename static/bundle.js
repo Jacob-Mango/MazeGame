@@ -168900,6 +168900,7 @@ class Player {
 	constructor(id, name, position, isOwningPlayer, isServer) {
 		this.id = id;
 		this.name = name;
+		this.socket_id;
 		this.isOwningPlayer = isOwningPlayer;
 		this.isServer = isServer === "undefined" ? false : isServer;
 
@@ -168950,7 +168951,7 @@ class Player {
 	}
 
 	createModel(game) {
-		var model = new Physijs.BoxMesh(new THREE.CubeGeometry(15, 15, 15), new THREE.MeshNormalMaterial(), 1);
+		var model = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 20, 20), new THREE.MeshNormalMaterial(), 1);
 		model.position.set(this.serverPosition.x, this.serverPosition.y, this.serverPosition.z);
 
 		var self = this;
@@ -168986,7 +168987,11 @@ class Player {
 		var dy = v1.y - v2.y;
 		var dz = v1.z - v2.z;
 
-		return Math.sqrt(dx * dx + dy * dy + dz * dz);
+		dx = dx * dx;
+		dy = dy * dy;
+		dz = dz * dz;
+
+		return Math.sqrt(dx + dy + dz);
 	}
 
 	lerp(a, b, f) {
@@ -169029,8 +169034,8 @@ class Player {
 
 		if (typeof this.nametag !== "undefined") {
 			this.nametag.position.x = this.model.position.x;
-			this.nametag.position.y = this.model.position.y + 7;
-			this.nametag.position.z = this.model.position.z + 10;
+			this.nametag.position.y = this.model.position.y + 10;
+			this.nametag.position.z = this.model.position.z + 3;
 		}
 
 		if (typeof this.model !== "undefined") {
@@ -169051,6 +169056,7 @@ class Player {
 			this.serverPosition.y = this.model.position.y;
 			this.serverPosition.z = this.model.position.z;
 		} else {
+			/*
 			var currentPosition = new THREE.Vector3(this.model.position.x, 0, this.model.position.z);
 			var serverPosition = new THREE.Vector3(this.serverPosition.x, 0, this.serverPosition.z);
 
@@ -169067,7 +169073,8 @@ class Player {
 
 				this.model.position.set(dx, dy, dz);
 				this.model.__dirtyPosition = true;
-			}
+            }
+            */
 		}
 	}
 
@@ -169173,7 +169180,7 @@ class Client {
 	}
 
 	onConnectionSuccessful(socket, data) {
-		socket.emit("player_login", { name: socket.id });
+		socket.emit("player_login", { name: false });
 	}
 
 	onPlayerJoin(socket, data) {
@@ -169211,14 +169218,10 @@ class Client {
 	}
 
 	update_input(keyManager) {
-		var mov_key = {
-			x: 0,
-			y: 0,
-			z: 0
-		};
-
 		var controllingPlayer = this.game.getPlayer(this.controllingClient_ID);
 		if (typeof controllingPlayer !== "undefined") {
+			var mov_key = { x: 0, y: 0, z: 0 };
+
 			if (keyManager.isDown(keyManager.KeyCodes.UP)) mov_key.z = -1;
 			if (keyManager.isDown(keyManager.KeyCodes.DOWN)) mov_key.z = 1;
 			if (keyManager.isDown(keyManager.KeyCodes.LEFT)) mov_key.x = -1;
@@ -169229,13 +169232,12 @@ class Client {
 			if (!(mov_key.x == 0 && mov_key.y == 0 && mov_key.z == 0)) {
 				this.socket.emit("player_move", {
 					id: controllingPlayer.id,
-					input: mov_key
+					input: mov_key,
+					timeSentAt: new Date().getTime()
 				});
 
 				controllingPlayer.move(mov_key, this.game.scene);
 			}
-
-			this.camera.setPlayerPosition(controllingPlayer.model.position);
 		}
 	}
 
@@ -175136,6 +175138,15 @@ class Game {
 		return this.players[id];
 	}
 
+	getPlayerFromSocketID(socket_id) {
+		for (var key in this.players) {
+			if (this.players.hasOwnProperty(key)) {
+				if (this.players[key].socket_id == socket_id) return this.players[key];
+			}
+		}
+		return undefined;
+	}
+
 	removePlayer(id) {
 		if (typeof this.players[id].model !== "undefined") this.scene.remove(this.players[id].model);
 		if (typeof this.players[id].nametag !== "undefined") this.scene.remove(this.players[id].nametag);
@@ -175244,13 +175255,12 @@ Number.prototype.clamp = function(min, max) {
 
 class Camera {
 	constructor() {
-		this.previousFollowPosition = { x: 0, y: 0, z: 0 };
 		this.followPosition = { x: 0, y: 0, z: 0 };
 
 		this.tCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 10000);
-		this.dx = 0;
-		this.dy = 0;
-		this.dz = 0;
+		this.dx = this.followPosition.x;
+		this.dy = this.followPosition.y;
+		this.dz = this.followPosition.z;
 	}
 
 	lerp(a, b, f) {
@@ -175258,21 +175268,21 @@ class Camera {
 	}
 
 	update(dt) {
-		var lerp = 0.05;
+		var lerp = 0.025;
 
-		var nx = (this.followPosition.z - this.dz).clamp(0, 2);
-		var nz = 64 - Math.abs(this.followPosition.x - this.dx) * nx;
+		var nx = (this.followPosition.z - this.dz).clamp(0, 0.2);
+		var nz = 90; // - Math.abs(this.followPosition.x - this.dx) * nx;
 
 		this.dx += (this.followPosition.x - this.dx) * lerp * dt;
 		this.dy += (this.followPosition.y - this.dy) * lerp * dt;
 		this.dz += (this.followPosition.z - this.dz) * lerp * dt;
 
-		this.tCamera.position.set(this.dx, this.dy + 16, this.dz + nz);
-		this.tCamera.lookAt(new THREE.Vector3(this.followPosition.x, this.followPosition.y, this.followPosition.z));
+		this.tCamera.position.set(this.dx, this.dy + 25, this.dz + nz);
+		this.tCamera.rotation.set(-18 / 180.0 * Math.PI, 0, 0);
+		// this.tCamera.lookAt(new THREE.Vector3(this.dx, this.dy + 8, this.dz));
 	}
 
 	setPlayerPosition(position) {
-		this.previousFollowPosition = this.followPosition;
 		this.followPosition = position;
 	}
 }

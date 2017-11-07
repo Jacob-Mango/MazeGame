@@ -8,6 +8,7 @@ class Player {
 	constructor(id, name, position, isOwningPlayer, isServer) {
 		this.id = id;
 		this.name = name;
+		this.socket_id;
 		this.isOwningPlayer = isOwningPlayer;
 		this.isServer = isServer === "undefined" ? false : isServer;
 
@@ -58,7 +59,7 @@ class Player {
 	}
 
 	createModel(game) {
-		var model = new Physijs.BoxMesh(new THREE.CubeGeometry(15, 15, 15), new THREE.MeshNormalMaterial(), 1);
+		var model = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 20, 20), new THREE.MeshNormalMaterial(), 1);
 		model.position.set(this.serverPosition.x, this.serverPosition.y, this.serverPosition.z);
 
 		var self = this;
@@ -141,8 +142,8 @@ class Player {
 
 		if (typeof this.nametag !== "undefined") {
 			this.nametag.position.x = this.model.position.x;
-			this.nametag.position.y = this.model.position.y + 7;
-			this.nametag.position.z = this.model.position.z + 10;
+			this.nametag.position.y = this.model.position.y + 10;
+			this.nametag.position.z = this.model.position.z + 3;
 		}
 
 		if (typeof this.model !== "undefined") {
@@ -163,6 +164,7 @@ class Player {
 			this.serverPosition.y = this.model.position.y;
 			this.serverPosition.z = this.model.position.z;
 		} else {
+			/*
 			var currentPosition = new THREE.Vector3(this.model.position.x, 0, this.model.position.z);
 			var serverPosition = new THREE.Vector3(this.serverPosition.x, 0, this.serverPosition.z);
 
@@ -179,7 +181,8 @@ class Player {
 
 				this.model.position.set(dx, dy, dz);
 				this.model.__dirtyPosition = true;
-			}
+            }
+            */
 		}
 	}
 
