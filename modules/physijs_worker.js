@@ -884,7 +884,7 @@ module.exports = function(workerToSceneMessageHandler, Ammo) {
 					var pt = contactManifold.getContactPoint(j);
 					var ptA = pt.getPositionWorldOnA();
 					var ptB = pt.getPositionWorldOnB();
-					var ptdist = pt.getDistance();
+					var ptDist = pt.getDistance();
 				}
 
 				transferableMessage({ cmd: "collision", obA: obA.id, obB: obB.id });
@@ -900,6 +900,28 @@ module.exports = function(workerToSceneMessageHandler, Ammo) {
 		}
 	};
 
+	public_functions.rayTrace = function(params) {
+		if (world) {
+			var from = new Ammo.btVector3(params.from.x, params.from.y, params.from.z);
+			var to = new Ammo.btVector3(params.to.x, params.to.y, params.to.z);
+			var res = new Ammo.ClosestRayResultCallback(from, to);
+
+			var obToTest = _objects[params.objID];
+
+			world.rayTestSingle(from, to, obToTest, obToTest.getRootCollisionShape(), obToTest.getWorldTransform(), res);
+
+			var hitData = {};
+			hitData.hasHit = res.hasHit();
+			hitData.hitPoint = { x: res.get_m_hitPointWorld().x, y: res.get_m_hitPointWorld().y, z: res.get_m_hitPointWorld().z };
+			console.log("Hit Data: %j", hitData);
+
+			transferableMessage({ cmd: "rayTrace", objID: params.objID, hitData: hitData });
+
+			Ammo.destroy(from);
+			Ammo.destroy(to);
+			Ammo.destroy(res);
+		}
+	};
 	/*
   public_functions.simulate = function simulate(params) {
     if (world) {

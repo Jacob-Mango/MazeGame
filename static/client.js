@@ -108,12 +108,14 @@ class Client {
 			if (keyManager.isDown(keyManager.KeyCodes.LEFT)) mov_key.x = -1;
 			if (keyManager.isDown(keyManager.KeyCodes.RIGHT)) mov_key.x = 1;
 
-			this.socket.emit("player_move", {
-				id: controllingPlayer.id,
-				input: mov_key
-			});
+			if (!(mov_key.x == 0 && mov_key.y == 0 && mov_key.z == 0)) {
+				this.socket.emit("player_move", {
+					id: controllingPlayer.id,
+					input: mov_key
+				});
 
-			controllingPlayer.move(mov_key);
+				controllingPlayer.move(mov_key, this.game.scene);
+			}
 
 			this.renderer.setCameraPosition({
 				x: controllingPlayer.model.position.x,
@@ -147,6 +149,12 @@ class Client {
 
 		client.hud.setPosition(controllingPlayerPos);
 		client.hud.updatePlayerList(client.game.players);
+
+		client.renderer.setCameraPosition({
+			x: controllingPlayer.model.position.x,
+			y: controllingPlayer.model.position.y + 16,
+			z: controllingPlayer.model.position.z + 64
+		});
 	}
 
 	render(dt, client) {

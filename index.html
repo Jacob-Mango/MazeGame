@@ -1,45 +1,61 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Maze Game</title>
-		<style>
-			html, body {
-				margin: 0;
-				padding: 0;
-			}
 
-			#container {
-				padding-left: 0;
-				padding-right: 0;
-				display: block;
-				margin: 0 0;
-			}
-		</style>
-		
-		
-		<link rel="stylesheet" type="text/css" href="/static/style.css">
-	</head>
-	<body>
-		<div id="container">
-			<div id="hud">
-				<div class="performance">
-					<h1>Debug Information</h1>
-					<h3>FPS: <span id="fps">0</span></h3>
-					<h3>UPS: <span id="ups">0</span></h3>
-					<h3>Position: </h3>
-					<div class="position">
-						<h4>X: <span id="position.x"></span></h4>
-						<h4>Y: <span id="position.y"></span></h4>
-						<h4>Z: <span id="position.z"></span></h4>
-					</div>
-					<h3>Username: <span id="username"></span></h3>
-				</div>
-				<div id="player_list">
-					<h1>Player List</h1>
-				</div>
-			</div>
-		</div>
-		
-        <script type="text/javascript" src="/static/bundle.js" charset="utf-8"></script>
-	</body>
+<head>
+    <title>Maze Game</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #container {
+            padding-left: 0;
+            padding-right: 0;
+            display: block;
+            margin: 0 0;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+
+<body>
+    <div id="container">
+        <div id="hud">
+            <div class="performance">
+                <h1>Debug Information</h1>
+                <h3>FPS:
+                    <span id="fps">0</span>
+                </h3>
+                <h3>UPS:
+                    <span id="ups">0</span>
+                </h3>
+                <h3>Position: </h3>
+                <div class="position">
+                    <h4>X:
+                        <span id="position.x"></span>
+                    </h4>
+                    <h4>Y:
+                        <span id="position.y"></span>
+                    </h4>
+                    <h4>Z:
+                        <span id="position.z"></span>
+                    </h4>
+                </div>
+                <h3>Username:
+                    <span id="username"></span>
+                </h3>
+            </div>
+            <div class="player_list">
+                <h1>Player List</h1>
+                <div id="player_list"></div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script type="text/javascript" src="/static/bundle.js" charset="utf-8"></script>
+</body>
+
 </html>

@@ -522,6 +522,9 @@ module.exports = function(THREE, Ammo) {
 							obA.dispatchEvent("collision", obB);
 							obB.dispatchEvent("collision", obA);
 							break;
+						case "rayTrace":
+							self._objects[data.objID].dispatchEvent("rayTrace", data.hitData);
+							break;
 						default:
 							// Do nothing, just show the message
 							console.debug("Received: " + data.cmd);
@@ -676,14 +679,6 @@ module.exports = function(THREE, Ammo) {
 	};
 
 	Physijs.Scene.prototype._updateCollisions = function(data) {
-		/**
- * #TODO
- * This is probably the worst way ever to handle collisions. The inherent evilness is a residual
- * effect from the previous version's evilness which mutated when switching to transferable objects.
- *
- * If you feel inclined to make this better, please do so.
- */
-
 		var i,
 			j,
 			offset,
@@ -851,6 +846,12 @@ module.exports = function(THREE, Ammo) {
 			}
 
 			addObjectChildren(parent, object.children[i]);
+		}
+	};
+
+	Physijs.Scene.prototype.rayTrace = function(parent, trace) {
+		if (parent._physijs) {
+			this.execute("rayTrace", { objID: parent._physijs.id, from: trace.from, to: trace.to });
 		}
 	};
 

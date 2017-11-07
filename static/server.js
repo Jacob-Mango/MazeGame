@@ -30,6 +30,10 @@ class Server {
 		this.manageIncomingData(this);
 		this.manageConsoleInput(this);
 
+		this.addBot("Bot_1");
+		this.addBot("Bot_2");
+		this.addBot("Bot_3");
+
 		console.log("Server has started.");
 	}
 
@@ -145,6 +149,20 @@ class Server {
 		return position;
 	}
 
+	addBot(name) {
+		let player = new Player(name, name, this.checkForSpawnPosition(), false, true);
+
+		this.io.emit("player_join", {
+			id: player.id,
+			data: player.formatJSON()
+		});
+
+		player.createModel(this.game);
+		this.game.addPlayer(player);
+
+		console.log(this.game.players[name].name + " has joined!");
+	}
+
 	onPlayerLogin(client, data) {
 		let player = new Player(client.id, data.name, this.checkForSpawnPosition(), false, true);
 
@@ -191,7 +209,7 @@ class Server {
 			console.log("Could not find player for id " + data.id);
 			return;
 		} else {
-			this.game.players[data.id].move(data.input);
+			this.game.players[data.id].move(data.input, this.game.scene);
 		}
 	}
 
