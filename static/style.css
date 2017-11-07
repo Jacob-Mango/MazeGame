@@ -82,3 +82,13 @@ h4 {
 span {
 	font-weight: 100;
 }
+
+input[type="checkbox"]:checked ~ .moreinfo {
+	display: block;
+	visibility: visible;
+}
+
+.moreinfo {
+	display: none;
+	visibility: hidden;
+}

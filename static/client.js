@@ -126,15 +126,15 @@ class Client {
 		performanceInfo.ups = client.game.ups;
 
 		client.hud.setPerformanceInfo(performanceInfo);
-		client.hud.updatePlayerList(client.game.players);
 	}
-
+	
 	update(dt, client) {
 		var controllingPlayer = client.game.players[client.controllingClient_ID];
 		if (typeof controllingPlayer === "undefined") return;
-
+		
 		client.update_input(client.keyManager);
 		client.hud.setPosition(controllingPlayer.model.position);
+		client.hud.updatePlayerList(client.game.players);
 	}
 
 	render(dt, client) {

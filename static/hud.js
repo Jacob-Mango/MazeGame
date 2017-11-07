@@ -15,52 +15,42 @@ class HUD {
 	}
 
 	updatePlayerList(players) {
-		var el = document.getElementById("player_list");
+		var div = document.getElementById("player_list");
+		var html = "";
 		for (var key in players) {
 			if (players.hasOwnProperty(key)) {
-				el.innerHTML = el.innerHTML + this.addPlayerToList(players[key]);
+				html += this.addPlayerToList(players[key]);
 			}
 		}
+		div.innerHTML = html;
 	}
 
 	addPlayerToList(player) {
-		try {
-			var player_html = {};
+		var position = { x: 0, y: 0, z: 0 };
+		if (player.model) position = player.model.position;
 
-			player_html[1] = "<div class='player'>";
-			player_html[2] = "  <h2 id='username'>" + player.name + "</h3>";
-			player_html[3] = "  <h3>Position: </h3>";
-			player_html[4] = "	<div class='position'>";
-			player_html[5] = "		<h4>X: <span>" + player.model.position.x.toFixed(2) + "</span></h4>";
-			player_html[6] = "		<h4>Y: <span>" + player.model.position.y.toFixed(2) + "</span></h4>";
-			player_html[7] = "		<h4>Z: <span>" + player.model.position.z.toFixed(2) + "</span></h4>";
-			player_html[8] = "	</div>";
-			player_html[9] = "</div>";
+		var player_html = [];
 
-			var html = "";
-			for (var i = 0; i < player_html.length; i++) {
-				html = html + player_html[i];
-			}
-			return html;
-		} catch (e) {
-			var player_html = {};
+		var b = 0;
+		player_html[b++] = "<div class='player'>";
+		player_html[b++] = "	<h2 id='username'>" + player.name + "</h3>";
+		player_html[b++] = "	<input type='checkbox'>"
+		player_html[b++] = "	<div class='moreinfo'>";
+		player_html[b++] = "		<h3>Position: </h3>";
+		player_html[b++] = "		<div class='position'>";
+		player_html[b++] = "			<h4>X: <span>" + position.x.toFixed(2) + "</span></h4>";
+		player_html[b++] = "			<h4>Y: <span>" + position.y.toFixed(2) + "</span></h4>";
+		player_html[b++] = "			<h4>Z: <span>" + position.z.toFixed(2) + "</span></h4>";
+		player_html[b++] = "		</div>";
+		player_html[b++] = "	</div>";
+		player_html[b++] = "</div>";
 
-			player_html[1] = "<div class='player'>";
-			player_html[2] = "  <h2 id='username'>" + player.name + "</h3>";
-			player_html[3] = "  <h3>Position: </h3>";
-			player_html[4] = "	<div class='position'>";
-			player_html[5] = "		<h4>X: <span>" + 0.0 + "</span></h4>";
-			player_html[6] = "		<h4>Y: <span>" + 0.0 + "</span></h4>";
-			player_html[7] = "		<h4>Z: <span>" + 0.0 + "</span></h4>";
-			player_html[8] = "	</div>";
-			player_html[9] = "</div>";
-
-			var html = "";
-			for (var i = 0; i < player_html.length; i++) {
-				html = html + player_html[i];
-			}
-			return html;
+		let string = "";
+		for (var i = 0; i < player_html.length; i++) {
+			if (typeof player_html[i] === "undefined" || player_html[i] === null) continue;
+			string += player_html[i];
 		}
+		return string;
 	}
 
 	setSpanValue(id, value) {
