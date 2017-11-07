@@ -24,54 +24,61 @@ canvas,
 }
 
 .performance {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: 190px;
-    padding: 8px;
-    background-color: rgba(151, 151, 151, 0.4);
-    border: rgba(121, 121, 121, 0.8) 1px solid;
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	width: 210px;
+	padding: 8px;
+	background-color: rgba(151, 151, 151, 0.4);
+	border: rgba(121, 121, 121, 0.8) 1px solid;
+	border-radius: 4px;
 }
 
-#player_list {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 190px;
-    padding: 8px;
-    background-color: rgba(151, 151, 151, 0.4);
-    border: rgba(121, 121, 121, 0.8) 1px solid;
+.player_list {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 190px;
+	padding: 8px;
+	background-color: rgba(151, 151, 151, 0.4);
+	border: rgba(121, 121, 121, 0.8) 1px solid;
+	border-radius: 4px;
 }
 
 .position {
-    padding-left: 20px;
+	padding-left: 20px;
 }
 
-#player_list h1, .performance h1,
-#player_list h2, .performance h2,
-#player_list h3, .performance h3,
-#player_list h4, .performance h4 {
+h1,
+h2,
+h3,
+h4 {
 	font-family: "Arial", sans-serif;
 	position: relative;
-    color: #efefef;
-    padding: 0;
-    margin: 0;
+	color: #fcfcfc;
+	padding: 0;
+	margin: 0;
+	font-weight: 800;
 }
 
-#player_list h1, .performance h1 {
-    font-size: 20px;
-    padding-bottom: 6px;
+h1 {
+	font-size: 20px;
+	padding-bottom: 6px;
 }
 
-#player_list h2, .performance h2 {
-    font-size: 18px;
+h2 {
+	font-size: 18px;
 }
 
-#player_list h3, .performance h3 {
-    font-size: 14px;
-    padding-left: 6px;
+h3 {
+	font-size: 14px;
+	padding-left: 6px;
 }
 
-#player_list h4, .performance h4 {
-    font-size: 12px;
+h4 {
+	font-size: 12px;
+}
+
+span {
+	font-weight: 100;
 }

@@ -168740,7 +168740,6 @@ class HUD {
 
 	updatePlayerList(players) {
 		var el = document.getElementById("player_list");
-		el.innerHTML = "<h1>Player List</h1>";
 		for (var key in players) {
 			if (players.hasOwnProperty(key)) {
 				el.innerHTML = el.innerHTML + this.addPlayerToList(players[key]);
@@ -168749,9 +168748,7 @@ class HUD {
 	}
 
 	addPlayerToList(player) {
-		if (!player || player.has_loaded == false) {
-			return "";
-		} else {
+		try {
 			var player_html = {};
 
 			player_html[1] = "<div class='player'>";
@@ -168761,6 +168758,24 @@ class HUD {
 			player_html[5] = "		<h4>X: <span>" + player.model.position.x.toFixed(2) + "</span></h4>";
 			player_html[6] = "		<h4>Y: <span>" + player.model.position.y.toFixed(2) + "</span></h4>";
 			player_html[7] = "		<h4>Z: <span>" + player.model.position.z.toFixed(2) + "</span></h4>";
+			player_html[8] = "	</div>";
+			player_html[9] = "</div>";
+
+			var html = "";
+			for (var i = 0; i < player_html.length; i++) {
+				html = html + player_html[i];
+			}
+			return html;
+		} catch (e) {
+			var player_html = {};
+
+			player_html[1] = "<div class='player'>";
+			player_html[2] = "  <h2 id='username'>" + player.name + "</h3>";
+			player_html[3] = "  <h3>Position: </h3>";
+			player_html[4] = "	<div class='position'>";
+			player_html[5] = "		<h4>X: <span>" + 0.0 + "</span></h4>";
+			player_html[6] = "		<h4>Y: <span>" + 0.0 + "</span></h4>";
+			player_html[7] = "		<h4>Z: <span>" + 0.0 + "</span></h4>";
 			player_html[8] = "	</div>";
 			player_html[9] = "</div>";
 
@@ -168803,7 +168818,8 @@ class KeyManager {
 			LEFT: 65,
 			UP: 87,
 			RIGHT: 68,
-			DOWN: 83
+			DOWN: 83,
+			SPACE: 32
 		};
 	}
 
@@ -168835,50 +168851,30 @@ var Ammo = __webpack_require__(5);
 var Physijs = __webpack_require__(6)(THREE, Ammo);
 
 class Renderer {
-	constructor() {
-		this.WC = 0;
-		this.HC = this.WC;
-		this.WIDTH = window.innerWidth - this.WC;
-		this.HEIGHT = window.innerHeight - this.HC;
+	constructor() {}
 
-		this.VIEW_ANGLE = 90;
-		this.ASPECT = this.WIDTH / this.HEIGHT;
-		this.NEAR = 0.1;
-		this.FAR = 10000;
-
-		this.createContext();
-	}
-
-	createContext() {
+	createContext(camera) {
 		this.container = document.getElementById("container");
 
 		this.webGLrenderer = new THREE.WebGLRenderer();
-		this.webGLrenderer.setSize(this.WIDTH, this.HEIGHT);
 		this.container.appendChild(this.webGLrenderer.domElement);
 
-		this.camera = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, this.NEAR, this.FAR);
+		this.camera = camera;
+
+		this.resize();
 
 		window.addEventListener("resize", this.resize.bind(this), false);
 	}
 
 	resize() {
-		this.WIDTH = window.innerWidth - this.WC;
-		this.HEIGHT = window.innerHeight - this.HC;
+		this.WIDTH = window.innerWidth;
+		this.HEIGHT = window.innerHeight;
 
 		this.ASPECT = this.WIDTH / this.HEIGHT;
 		this.camera.aspect = this.ASPECT;
 		this.camera.updateProjectionMatrix();
 
 		this.webGLrenderer.setSize(this.WIDTH, this.HEIGHT);
-	}
-
-	toRadians(angle) {
-		return angle * (Math.PI / 180);
-	}
-
-	setCameraPosition(position) {
-		this.camera.position.set(position.x, position.y, position.z);
-		this.camera.rotation.set(this.toRadians(-15), 0, 0);
 	}
 
 	render(scene) {
@@ -168919,6 +168915,13 @@ class Player {
 
 		this.nametag = undefined;
 		this.has_loaded = false;
+
+		this.dir = { x: 0, y: 0, z: 0 };
+
+		this.jump_force = 200;
+		this.speed = 75;
+		this.gravity = -9.81;
+		this.can_jump = true;
 	}
 
 	createNametag() {
@@ -168962,7 +168965,6 @@ class Player {
 		});
 
 		model.addEventListener("rayTrace", function(hitData) {
-			console.log(hitData.hasHit);
 			if (hitData.hasHit) {
 				model.can_move = false;
 			} else {
@@ -168992,6 +168994,39 @@ class Player {
 	}
 
 	update(dt) {
+		this.velocity.x *= 0.1;
+		this.velocity.z *= 0.1;
+
+		this.velocity.x += this.dir.x * this.speed;
+		this.velocity.z += this.dir.z * this.speed;
+
+		if (this.model.position.y <= 0) {
+			this.model.position.y = 0;
+			this.can_jump = true;
+			this.velocity.y = 0;
+		} else {
+			this.velocity.y += this.gravity;
+		}
+
+		if (this.can_jump && this.dir.y > 0) {
+			this.can_jump = false;
+			this.velocity.y = this.jump_force;
+		}
+
+		if (this.scene) {
+			var From = {};
+			From.x = this.model.position.x;
+			From.y = this.model.position.y;
+			From.z = this.model.position.z;
+
+			var To = {};
+			To.x = this.model.position.x + this.velocity.x / 100;
+			To.y = this.model.position.y + this.velocity.y / 100;
+			To.z = this.model.position.z + this.velocity.z / 100;
+
+			this.scene.rayTrace(this.model, { from: From, to: To });
+		}
+
 		if (typeof this.nametag !== "undefined") {
 			this.nametag.position.x = this.model.position.x;
 			this.nametag.position.y = this.model.position.y + 7;
@@ -169003,15 +169038,11 @@ class Player {
 				this.model.position.x += this.velocity.x / 100;
 				this.model.position.y += this.velocity.y / 100;
 				this.model.position.z += this.velocity.z / 100;
-
 				this.model.__dirtyPosition = true;
 			}
-
-			var friction = 0.1;
-			this.velocity.x *= friction;
-			this.velocity.y *= friction;
-			this.velocity.z *= friction;
 		}
+
+		this.dir = { x: 0, y: 0, z: 0 };
 	}
 
 	render(dt) {
@@ -169020,10 +169051,11 @@ class Player {
 			this.serverPosition.y = this.model.position.y;
 			this.serverPosition.z = this.model.position.z;
 		} else {
-			var currentPosition = new THREE.Vector3(this.model.position.x, this.model.position.y, this.model.position.z);
+			var currentPosition = new THREE.Vector3(this.model.position.x, 0, this.model.position.z);
+			var serverPosition = new THREE.Vector3(this.serverPosition.x, 0, this.serverPosition.z);
 
 			if (this.isOwningPlayer) {
-				if (this.distanceVector(currentPosition, this.serverPosition) > 5) {
+				if (this.distanceVector(currentPosition, serverPosition) > this.speed * 2) {
 					this.model.position.set(this.serverPosition.x, this.serverPosition.y, this.serverPosition.z);
 					this.model.__dirtyPosition = true;
 				}
@@ -169040,34 +169072,12 @@ class Player {
 	}
 
 	move(dir, scene) {
-		var speed = 50;
-
-		this.velocity.x += dir.x * speed;
-		this.velocity.y += dir.y * speed;
-		this.velocity.z += dir.z * speed;
-
-		if (scene) {
-			var From = {};
-			From.x = this.model.position.x;
-			From.y = this.model.position.y;
-			From.z = this.model.position.z;
-
-			var Size = {};
-			Size.x = 0; // Math.sign(this.velocity.x) * 15 * 0.5;
-			Size.y = 0; // Math.sign(this.velocity.y) * 15 * 0.5;
-			Size.z = 0; // Math.sign(this.velocity.z) * 15 * 0.5;
-
-			var To = {};
-			To.x = this.model.position.x + this.velocity.x / 100 + Size.x;
-			To.y = this.model.position.y + this.velocity.y / 100 + Size.y;
-			To.z = this.model.position.z + this.velocity.z / 100 + Size.z;
-
-			scene.rayTrace(this.model, { from: From, to: To });
-		}
+		this.dir = dir;
+		this.scene = scene;
 	}
 
 	setServerPosition(position, lastPositionTime) {
-		if (this.isServer || lastPositionTime > this.lastPositionTime) {
+		if (lastPositionTime > this.lastPositionTime) {
 			this.lastPositionTime = lastPositionTime;
 
 			this.previousServerPostion.x = this.serverPosition.x;
@@ -169116,20 +169126,22 @@ var HUD = __webpack_require__(27);
 var KeyManager = __webpack_require__(28);
 var Renderer = __webpack_require__(29);
 var Player = __webpack_require__(30);
+var Camera = __webpack_require__(61);
 
 class Client {
-	constructor(game, socket, renderer, hud, keyManager) {
+	constructor(game, socket, renderer, camera, hud, keyManager) {
 		this.game = game;
 		this.socket = socket;
 		this.renderer = renderer;
+		this.camera = camera;
 		this.hud = hud;
 		this.keyManager = keyManager;
 	}
 
 	start() {
-		this.game.scene.add(this.renderer.camera);
-
 		this.game.start();
+
+		this.game.scene.add(this.renderer.camera);
 		this.manageIncomingData(this, this.socket);
 	}
 
@@ -169165,7 +169177,7 @@ class Client {
 	}
 
 	onPlayerJoin(socket, data) {
-		let player = new Player(data.id, data.data.name, data.data.position, false);
+		let player = new Player(data.id, data.player.name, data.player.position, false, false);
 
 		console.log(player.name + " has joined the game.");
 
@@ -169175,7 +169187,7 @@ class Client {
 	}
 
 	onPlayerSuccessLogin(socket, data) {
-		let player = new Player(data.id, data.data.name, data.data.position, true);
+		let player = new Player(data.id, data.player.name, data.player.position, true, false);
 
 		console.log("You have successfully logged in! Your client ID is " + data.id + ".");
 
@@ -169187,13 +169199,11 @@ class Client {
 
 	onPlayerDisconnect(socket, data) {
 		console.log(this.game.getPlayer(data.id).name + " has left the game.");
-
 		this.game.removePlayer(data.id);
 	}
 
 	onPlayerMove(socket, data) {
 		if (typeof this.game.players[data.id] === "undefined") {
-			console.log("Could not find player for id " + data.id);
 			return;
 		} else {
 			this.game.players[data.id].setServerPosition(data.position, data.timeSentAt);
@@ -169214,6 +169224,8 @@ class Client {
 			if (keyManager.isDown(keyManager.KeyCodes.LEFT)) mov_key.x = -1;
 			if (keyManager.isDown(keyManager.KeyCodes.RIGHT)) mov_key.x = 1;
 
+			if (keyManager.isDown(keyManager.KeyCodes.SPACE)) mov_key.y = 1;
+
 			if (!(mov_key.x == 0 && mov_key.y == 0 && mov_key.z == 0)) {
 				this.socket.emit("player_move", {
 					id: controllingPlayer.id,
@@ -169223,11 +169235,7 @@ class Client {
 				controllingPlayer.move(mov_key, this.game.scene);
 			}
 
-			this.renderer.setCameraPosition({
-				x: controllingPlayer.model.position.x,
-				y: controllingPlayer.model.position.y + 16,
-				z: controllingPlayer.model.position.z + 64
-			});
+			this.camera.setPlayerPosition(controllingPlayer.model.position);
 		}
 	}
 
@@ -169239,31 +169247,23 @@ class Client {
 		performanceInfo.ups = client.game.ups;
 
 		client.hud.setPerformanceInfo(performanceInfo);
+		client.hud.updatePlayerList(client.game.players);
 	}
 
 	update(dt, client) {
-		client.update_input(client.keyManager);
-
 		var controllingPlayer = client.game.players[client.controllingClient_ID];
 		if (typeof controllingPlayer === "undefined") return;
 
-		var controllingPlayerPos = {
-			x: controllingPlayer.model.position.x,
-			y: controllingPlayer.model.position.y,
-			z: controllingPlayer.model.position.z
-		};
-
-		client.hud.setPosition(controllingPlayerPos);
-		client.hud.updatePlayerList(client.game.players);
-
-		client.renderer.setCameraPosition({
-			x: controllingPlayer.model.position.x,
-			y: controllingPlayer.model.position.y + 16,
-			z: controllingPlayer.model.position.z + 64
-		});
+		client.update_input(client.keyManager);
+		client.hud.setPosition(controllingPlayer.model.position);
 	}
 
 	render(dt, client) {
+		var controllingPlayer = client.game.players[client.controllingClient_ID];
+		if (typeof controllingPlayer === "undefined") return;
+
+		client.camera.setPlayerPosition(controllingPlayer.model.position);
+		client.camera.update(1);
 		client.renderer.render(client.game.scene);
 	}
 }
@@ -169273,12 +169273,15 @@ module.exports = Client;
 window.onload = function() {
 	var socket = IO();
 
-	let game = new Game();
-	let renderer = new Renderer();
-	let keyManager = new KeyManager();
-	let hud = new HUD();
+	var game = new Game();
+	var renderer = new Renderer();
+	var camera = new Camera();
+	var keyManager = new KeyManager();
+	var hud = new HUD();
 
-	let client = new Client(game, socket, renderer, hud, keyManager);
+	renderer.createContext(camera.tCamera);
+
+	var client = new Client(game, socket, renderer, camera, hud, keyManager);
 
 	game.setTickCallback(client.tick, client);
 	game.setUpdateCallback(client.update, client);
@@ -170452,7 +170455,7 @@ module.exports = function(workerToSceneMessageHandler, Ammo) {
 			var hitData = {};
 			hitData.hasHit = res.hasHit();
 			hitData.hitPoint = { x: res.get_m_hitPointWorld().x, y: res.get_m_hitPointWorld().y, z: res.get_m_hitPointWorld().z };
-			console.log("Hit Data: %j", hitData);
+			// console.log("Hit Data: %j", hitData);
 
 			transferableMessage({ cmd: "rayTrace", objID: params.objID, hitData: hitData });
 
@@ -175225,6 +175228,57 @@ class Game {
 module.exports = Game;
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var THREE = __webpack_require__(4);
+
+Number.prototype.clamp = function(min, max) {
+	return Math.min(Math.max(this, min), max);
+};
+
+class Camera {
+	constructor() {
+		this.previousFollowPosition = { x: 0, y: 0, z: 0 };
+		this.followPosition = { x: 0, y: 0, z: 0 };
+
+		this.tCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 10000);
+		this.dx = 0;
+		this.dy = 0;
+		this.dz = 0;
+	}
+
+	lerp(a, b, f) {
+		return a * (1.0 - f) + b * f;
+	}
+
+	update(dt) {
+		var lerp = 0.05;
+
+		var nx = (this.followPosition.z - this.dz).clamp(0, 2);
+		var nz = 64 - Math.abs(this.followPosition.x - this.dx) * nx;
+
+		this.dx += (this.followPosition.x - this.dx) * lerp * dt;
+		this.dy += (this.followPosition.y - this.dy) * lerp * dt;
+		this.dz += (this.followPosition.z - this.dz) * lerp * dt;
+
+		this.tCamera.position.set(this.dx, this.dy + 16, this.dz + nz);
+		this.tCamera.lookAt(new THREE.Vector3(this.followPosition.x, this.followPosition.y, this.followPosition.z));
+	}
+
+	setPlayerPosition(position) {
+		this.previousFollowPosition = this.followPosition;
+		this.followPosition = position;
+	}
+}
+
+module.exports = Camera;
+
 
 /***/ })
 /******/ ]);

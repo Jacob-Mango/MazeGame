@@ -23,6 +23,13 @@ class Player {
 
 		this.nametag = undefined;
 		this.has_loaded = false;
+
+		this.dir = { x: 0, y: 0, z: 0 };
+
+		this.jump_force = 200;
+		this.speed = 75;
+		this.gravity = -9.81;
+		this.can_jump = true;
 	}
 
 	createNametag() {
@@ -66,7 +73,6 @@ class Player {
 		});
 
 		model.addEventListener("rayTrace", function(hitData) {
-			console.log(hitData.hasHit);
 			if (hitData.hasHit) {
 				model.can_move = false;
 			} else {
@@ -88,7 +94,11 @@ class Player {
 		var dy = v1.y - v2.y;
 		var dz = v1.z - v2.z;
 
-		return Math.sqrt(dx * dx + dy * dy + dz * dz);
+		dx = dx * dx;
+		dy = dy * dy;
+		dz = dz * dz;
+
+		return Math.sqrt(dx + dy + dz);
 	}
 
 	lerp(a, b, f) {
@@ -96,6 +106,39 @@ class Player {
 	}
 
 	update(dt) {
+		this.velocity.x *= 0.1;
+		this.velocity.z *= 0.1;
+
+		this.velocity.x += this.dir.x * this.speed;
+		this.velocity.z += this.dir.z * this.speed;
+
+		if (this.model.position.y <= 0) {
+			this.model.position.y = 0;
+			this.can_jump = true;
+			this.velocity.y = 0;
+		} else {
+			this.velocity.y += this.gravity;
+		}
+
+		if (this.can_jump && this.dir.y > 0) {
+			this.can_jump = false;
+			this.velocity.y = this.jump_force;
+		}
+
+		if (this.scene) {
+			var From = {};
+			From.x = this.model.position.x;
+			From.y = this.model.position.y;
+			From.z = this.model.position.z;
+
+			var To = {};
+			To.x = this.model.position.x + this.velocity.x / 100;
+			To.y = this.model.position.y + this.velocity.y / 100;
+			To.z = this.model.position.z + this.velocity.z / 100;
+
+			this.scene.rayTrace(this.model, { from: From, to: To });
+		}
+
 		if (typeof this.nametag !== "undefined") {
 			this.nametag.position.x = this.model.position.x;
 			this.nametag.position.y = this.model.position.y + 7;
@@ -107,15 +150,11 @@ class Player {
 				this.model.position.x += this.velocity.x / 100;
 				this.model.position.y += this.velocity.y / 100;
 				this.model.position.z += this.velocity.z / 100;
-
 				this.model.__dirtyPosition = true;
 			}
-
-			var friction = 0.1;
-			this.velocity.x *= friction;
-			this.velocity.y *= friction;
-			this.velocity.z *= friction;
 		}
+
+		this.dir = { x: 0, y: 0, z: 0 };
 	}
 
 	render(dt) {
@@ -124,10 +163,11 @@ class Player {
 			this.serverPosition.y = this.model.position.y;
 			this.serverPosition.z = this.model.position.z;
 		} else {
-			var currentPosition = new THREE.Vector3(this.model.position.x, this.model.position.y, this.model.position.z);
+			var currentPosition = new THREE.Vector3(this.model.position.x, 0, this.model.position.z);
+			var serverPosition = new THREE.Vector3(this.serverPosition.x, 0, this.serverPosition.z);
 
 			if (this.isOwningPlayer) {
-				if (this.distanceVector(currentPosition, this.serverPosition) > 5) {
+				if (this.distanceVector(currentPosition, serverPosition) > this.speed * 2) {
 					this.model.position.set(this.serverPosition.x, this.serverPosition.y, this.serverPosition.z);
 					this.model.__dirtyPosition = true;
 				}
@@ -144,34 +184,12 @@ class Player {
 	}
 
 	move(dir, scene) {
-		var speed = 50;
-
-		this.velocity.x += dir.x * speed;
-		this.velocity.y += dir.y * speed;
-		this.velocity.z += dir.z * speed;
-
-		if (scene) {
-			var From = {};
-			From.x = this.model.position.x;
-			From.y = this.model.position.y;
-			From.z = this.model.position.z;
-
-			var Size = {};
-			Size.x = 0; // Math.sign(this.velocity.x) * 15 * 0.5;
-			Size.y = 0; // Math.sign(this.velocity.y) * 15 * 0.5;
-			Size.z = 0; // Math.sign(this.velocity.z) * 15 * 0.5;
-
-			var To = {};
-			To.x = this.model.position.x + this.velocity.x / 100 + Size.x;
-			To.y = this.model.position.y + this.velocity.y / 100 + Size.y;
-			To.z = this.model.position.z + this.velocity.z / 100 + Size.z;
-
-			scene.rayTrace(this.model, { from: From, to: To });
-		}
+		this.dir = dir;
+		this.scene = scene;
 	}
 
 	setServerPosition(position, lastPositionTime) {
-		if (this.isServer || lastPositionTime > this.lastPositionTime) {
+		if (lastPositionTime > this.lastPositionTime) {
 			this.lastPositionTime = lastPositionTime;
 
 			this.previousServerPostion.x = this.serverPosition.x;

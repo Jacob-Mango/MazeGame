@@ -10,20 +10,22 @@ var HUD = require("./hud");
 var KeyManager = require("./keymanager");
 var Renderer = require("./renderer");
 var Player = require("./player");
+var Camera = require("./camera");
 
 class Client {
-	constructor(game, socket, renderer, hud, keyManager) {
+	constructor(game, socket, renderer, camera, hud, keyManager) {
 		this.game = game;
 		this.socket = socket;
 		this.renderer = renderer;
+		this.camera = camera;
 		this.hud = hud;
 		this.keyManager = keyManager;
 	}
 
 	start() {
-		this.game.scene.add(this.renderer.camera);
-
 		this.game.start();
+
+		this.game.scene.add(this.renderer.camera);
 		this.manageIncomingData(this, this.socket);
 	}
 
@@ -59,7 +61,7 @@ class Client {
 	}
 
 	onPlayerJoin(socket, data) {
-		let player = new Player(data.id, data.data.name, data.data.position, false);
+		let player = new Player(data.id, data.player.name, data.player.position, false, false);
 
 		console.log(player.name + " has joined the game.");
 
@@ -69,7 +71,7 @@ class Client {
 	}
 
 	onPlayerSuccessLogin(socket, data) {
-		let player = new Player(data.id, data.data.name, data.data.position, true);
+		let player = new Player(data.id, data.player.name, data.player.position, true, false);
 
 		console.log("You have successfully logged in! Your client ID is " + data.id + ".");
 
@@ -81,13 +83,11 @@ class Client {
 
 	onPlayerDisconnect(socket, data) {
 		console.log(this.game.getPlayer(data.id).name + " has left the game.");
-
 		this.game.removePlayer(data.id);
 	}
 
 	onPlayerMove(socket, data) {
 		if (typeof this.game.players[data.id] === "undefined") {
-			console.log("Could not find player for id " + data.id);
 			return;
 		} else {
 			this.game.players[data.id].setServerPosition(data.position, data.timeSentAt);
@@ -95,33 +95,26 @@ class Client {
 	}
 
 	update_input(keyManager) {
-		var mov_key = {
-			x: 0,
-			y: 0,
-			z: 0
-		};
-
 		var controllingPlayer = this.game.getPlayer(this.controllingClient_ID);
 		if (typeof controllingPlayer !== "undefined") {
+			var mov_key = { x: 0, y: 0, z: 0 };
+
 			if (keyManager.isDown(keyManager.KeyCodes.UP)) mov_key.z = -1;
 			if (keyManager.isDown(keyManager.KeyCodes.DOWN)) mov_key.z = 1;
 			if (keyManager.isDown(keyManager.KeyCodes.LEFT)) mov_key.x = -1;
 			if (keyManager.isDown(keyManager.KeyCodes.RIGHT)) mov_key.x = 1;
 
+			if (keyManager.isDown(keyManager.KeyCodes.SPACE)) mov_key.y = 1;
+
 			if (!(mov_key.x == 0 && mov_key.y == 0 && mov_key.z == 0)) {
 				this.socket.emit("player_move", {
 					id: controllingPlayer.id,
-					input: mov_key
+					input: mov_key,
+					timeSentAt: new Date().getTime()
 				});
 
 				controllingPlayer.move(mov_key, this.game.scene);
 			}
-
-			this.renderer.setCameraPosition({
-				x: controllingPlayer.model.position.x,
-				y: controllingPlayer.model.position.y + 16,
-				z: controllingPlayer.model.position.z + 64
-			});
 		}
 	}
 
@@ -133,31 +126,23 @@ class Client {
 		performanceInfo.ups = client.game.ups;
 
 		client.hud.setPerformanceInfo(performanceInfo);
+		client.hud.updatePlayerList(client.game.players);
 	}
 
 	update(dt, client) {
-		client.update_input(client.keyManager);
-
 		var controllingPlayer = client.game.players[client.controllingClient_ID];
 		if (typeof controllingPlayer === "undefined") return;
 
-		var controllingPlayerPos = {
-			x: controllingPlayer.model.position.x,
-			y: controllingPlayer.model.position.y,
-			z: controllingPlayer.model.position.z
-		};
-
-		client.hud.setPosition(controllingPlayerPos);
-		client.hud.updatePlayerList(client.game.players);
-
-		client.renderer.setCameraPosition({
-			x: controllingPlayer.model.position.x,
-			y: controllingPlayer.model.position.y + 16,
-			z: controllingPlayer.model.position.z + 64
-		});
+		client.update_input(client.keyManager);
+		client.hud.setPosition(controllingPlayer.model.position);
 	}
 
 	render(dt, client) {
+		var controllingPlayer = client.game.players[client.controllingClient_ID];
+		if (typeof controllingPlayer === "undefined") return;
+
+		client.camera.setPlayerPosition(controllingPlayer.model.position);
+		client.camera.update(1);
 		client.renderer.render(client.game.scene);
 	}
 }
@@ -167,12 +152,15 @@ module.exports = Client;
 window.onload = function() {
 	var socket = IO();
 
-	let game = new Game();
-	let renderer = new Renderer();
-	let keyManager = new KeyManager();
-	let hud = new HUD();
+	var game = new Game();
+	var renderer = new Renderer();
+	var camera = new Camera();
+	var keyManager = new KeyManager();
+	var hud = new HUD();
 
-	let client = new Client(game, socket, renderer, hud, keyManager);
+	renderer.createContext(camera.tCamera);
+
+	var client = new Client(game, socket, renderer, camera, hud, keyManager);
 
 	game.setTickCallback(client.tick, client);
 	game.setUpdateCallback(client.update, client);

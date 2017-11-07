@@ -13,11 +13,12 @@ var Player = require("./player");
 
 class Server {
 	constructor(http, io, app) {
-		console.log("Starting the server.");
 		this.game = new Game();
 		this.http = http;
 		this.io = io;
 		this.app = app;
+
+		this.numBots = 1;
 	}
 
 	start() {
@@ -29,10 +30,6 @@ class Server {
 		this.game.start();
 		this.manageIncomingData(this);
 		this.manageConsoleInput(this);
-
-		this.addBot("Bot_1");
-		this.addBot("Bot_2");
-		this.addBot("Bot_3");
 
 		console.log("Server has started.");
 	}
@@ -109,6 +106,9 @@ class Server {
 					server.game.players[player.id] = player;
 					console.log("Teleported " + player.name + " to %x, %y, %z", player.position.x, player.position.y, player.position.z);
 					break;
+				case "addbot":
+					this.addBot("Bot_" + this.numBots++);
+					break;
 				default:
 			}
 		});
@@ -170,19 +170,19 @@ class Server {
 			if (this.game.players.hasOwnProperty(key)) {
 				client.emit("player_join", {
 					id: key,
-					data: this.game.players[key].formatJSON()
+					player: this.game.players[key].formatJSON()
 				});
 			}
 		}
 
 		client.broadcast.emit("player_join", {
 			id: player.id,
-			data: player.formatJSON()
+			player: player.formatJSON()
 		});
 
 		client.emit("player_login_successful", {
 			id: player.id,
-			data: player.formatJSON()
+			player: player.formatJSON()
 		});
 
 		player.createModel(this.game);
@@ -205,11 +205,11 @@ class Server {
 	}
 
 	onPlayerMove(client, data) {
-		if (typeof this.game.players[data.id] === "undefined") {
-			console.log("Could not find player for id " + data.id);
+		var player = this.game.players[data.id];
+		if (typeof player === "undefined") {
 			return;
 		} else {
-			this.game.players[data.id].move(data.input, this.game.scene);
+			player.move(data.input, this.game.scene);
 		}
 	}
 

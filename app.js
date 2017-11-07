@@ -2,7 +2,7 @@ Error.stackTraceLimit = Infinity;
 
 require("console-stamp")(console, "HH:MM:ss.l");
 
-console.log("Loading \"app.js\" and dependencies.");
+console.log("Starting the server.");
 
 var express = require("express");
 var http = require("http");
@@ -12,8 +12,8 @@ var app = express();
 var http = http.Server(app);
 var io = socketIO(http);
 
-const webpack = require('webpack');
-const webpackConfig = require('./webpack.config');
+const webpack = require("webpack");
+const webpackConfig = require("./webpack.config");
 const compiler = webpack(webpackConfig);
 
 app.enable("trust proxy");

@@ -913,7 +913,7 @@ module.exports = function(workerToSceneMessageHandler, Ammo) {
 			var hitData = {};
 			hitData.hasHit = res.hasHit();
 			hitData.hitPoint = { x: res.get_m_hitPointWorld().x, y: res.get_m_hitPointWorld().y, z: res.get_m_hitPointWorld().z };
-			console.log("Hit Data: %j", hitData);
+			// console.log("Hit Data: %j", hitData);
 
 			transferableMessage({ cmd: "rayTrace", objID: params.objID, hitData: hitData });
 

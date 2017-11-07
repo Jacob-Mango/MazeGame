@@ -2,7 +2,8 @@
 title "Maze Game Server"
 
 :RUNSERVER
-title "Compiling Server"
+cls
+title "Building Webpack"
 bash -c "webpack --display-error-details"
 title "Maze Game Server"
 bash -c "node app.js"

@@ -24,9 +24,7 @@ class HUD {
 	}
 
 	addPlayerToList(player) {
-		if (!player || player.has_loaded == false) {
-			return "";
-		} else {
+		try {
 			var player_html = {};
 
 			player_html[1] = "<div class='player'>";
@@ -36,6 +34,24 @@ class HUD {
 			player_html[5] = "		<h4>X: <span>" + player.model.position.x.toFixed(2) + "</span></h4>";
 			player_html[6] = "		<h4>Y: <span>" + player.model.position.y.toFixed(2) + "</span></h4>";
 			player_html[7] = "		<h4>Z: <span>" + player.model.position.z.toFixed(2) + "</span></h4>";
+			player_html[8] = "	</div>";
+			player_html[9] = "</div>";
+
+			var html = "";
+			for (var i = 0; i < player_html.length; i++) {
+				html = html + player_html[i];
+			}
+			return html;
+		} catch (e) {
+			var player_html = {};
+
+			player_html[1] = "<div class='player'>";
+			player_html[2] = "  <h2 id='username'>" + player.name + "</h3>";
+			player_html[3] = "  <h3>Position: </h3>";
+			player_html[4] = "	<div class='position'>";
+			player_html[5] = "		<h4>X: <span>" + 0.0 + "</span></h4>";
+			player_html[6] = "		<h4>Y: <span>" + 0.0 + "</span></h4>";
+			player_html[7] = "		<h4>Z: <span>" + 0.0 + "</span></h4>";
 			player_html[8] = "	</div>";
 			player_html[9] = "</div>";
 
